@@ -23,6 +23,7 @@ import yaml
 from lxml import etree
 from lxml.html import fromstring
 from lxml.html import parse as html_parse
+from SPARQLWrapper import JSON, SPARQLWrapper
 
 from .errors import ReaderError
 from .xml import etree_to_dict
@@ -346,3 +347,37 @@ def xml_to_dict(tree: etree._Element):
     dict_obj["record"] = etree.tostring(tree)
 
     return dict_obj
+
+
+class SPARQLReader(BaseReader):
+    """Generic reader class to fetch and process RDF data from a SPARQL endpoint."""
+
+    def __init__(self, origin, query, mode="r", *args, **kwargs):
+        """Initialize the reader with the data source.
+
+        :param origin: The SPARQL endpoint from which to fetch the RDF data.
+        :param query: The SPARQL query to execute.
+        :param mode: Mode of operation (default is 'r' for reading).
+        """
+        self._origin = origin
+        self._query = query
+        super().__init__(origin=origin, mode=mode, *args, **kwargs)
+
+    def _iter(self, fp, *args, **kwargs):
+        raise NotImplementedError(
+            "SPARQLReader downloads one result set from SPARQL and therefore does not iterate through items"
+        )
+
+    def read(self, item=None, *args, **kwargs):
+        """Fetch and process RDF data, yielding results one at a time."""
+        if item:
+            raise NotImplementedError(
+                "SPARQLReader does not support being chained after another reader"
+            )
+
+        sparql = SPARQLWrapper(self._origin)
+        sparql.setQuery(self._query)
+        sparql.setReturnFormat(JSON)
+
+        results = sparql.query().convert()
+        yield from results["results"]["bindings"]

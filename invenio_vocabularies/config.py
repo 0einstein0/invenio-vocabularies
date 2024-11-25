@@ -10,6 +10,8 @@
 
 """Vocabularies configuration."""
 
+import re
+
 import idutils
 from invenio_i18n import lazy_gettext as _
 
@@ -19,6 +21,7 @@ from .datastreams.readers import (
     JsonLinesReader,
     JsonReader,
     OAIPMHReader,
+    SPARQLReader,
     TarReader,
     XMLReader,
     YamlReader,
@@ -43,6 +46,8 @@ VOCABULARIES_IDENTIFIER_SCHEMES = {
 }
 """"Generic identifier schemes, usable by other vocabularies."""
 
+edmo_regexp = re.compile(r"^https://edmo\.seadatanet\.org/report/\d+$")
+
 
 def is_pic(val):
     """Test if argument is a Participant Identification Code (PIC)."""
@@ -51,9 +56,15 @@ def is_pic(val):
     return val.isdigit()
 
 
+def is_edmo(val):
+    """Test if argument is a European Directory of Marine Organisations (EDMO) identifier."""
+    return edmo_regexp.match(val)
+
+
 VOCABULARIES_AFFILIATION_SCHEMES = {
     **VOCABULARIES_IDENTIFIER_SCHEMES,
     "pic": {"label": _("PIC"), "validator": is_pic},
+    "edmo": {"label": _("EDMO"), "validator": is_edmo},
 }
 """Affiliations allowed identifier schemes."""
 
@@ -135,6 +146,7 @@ VOCABULARIES_DATASTREAM_READERS = {
     "jsonl": JsonLinesReader,
     "gzip": GzipReader,
     "tar": TarReader,
+    "sparql": SPARQLReader,
     "yaml": YamlReader,
     "zip": ZipReader,
     "xml": XMLReader,
@@ -174,6 +186,15 @@ VOCABULARIES_TYPES_SEARCH = {
 
 SUBJECTS_EUROSCIVOC_FILE_URL = "https://publications.europa.eu/resource/distribution/euroscivoc/rdf/skos_ap_eu/EuroSciVoc-skos-ap-eu.rdf"
 """Subject EuroSciVoc file download link."""
+
+VOCABULARIES_AFFILIATIONS_EDMO_SPARQL_URL = "https://edmo.seadatanet.org/sparql/sparql"
+"""Affiliations EDMO SPARQL URL."""
+
+
+VOCABULARIES_AFFILIATIONS_EDMO_COUNTRY_MAPPING = {
+    "Cape Verde": "Cabo Verde",
+}
+"""Affiliations EDMO Country name remapping dictionary."""
 
 VOCABULARIES_ORCID_ACCESS_KEY = "TODO"
 """ORCID access key to access the s3 bucket."""
